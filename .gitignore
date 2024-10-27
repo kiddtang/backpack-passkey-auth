@@ -20,3 +20,11 @@ yarn-error.log
 /.idea
 /.vscode
 /.zed
+lesshst
+
+**/caddy
+/config/composer
+/config/psysh
+/data/composer
+frankenphp
+frankenphp-worker.php
