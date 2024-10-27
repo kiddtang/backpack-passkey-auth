@@ -19,6 +19,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Customize Controllers
+        $this->app->bind(
+            \Backpack\CRUD\app\Http\Controllers\MyAccountController::class,
+            \App\Http\Controllers\Admin\MyAccountController::class
+        );
     }
 }
