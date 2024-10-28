@@ -1,3 +1,36 @@
+@section('after_scripts')
+@basset('https://unpkg.com/@simplewebauthn/browser@10.0.0/dist/bundle/index.umd.min.js')
+<script>
+    const form = document.getElementById('passkey-form');
+    const registrationOptions = {!! trim(json_encode(session('passkey_register_options'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) !!};
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        // Name validation with length check
+        const name = document.querySelector('input[name="name"]').value.trim();
+        if (!name || name.length < 1 || name.length > 255) {
+            alert('Name must be between 1 and 255 characters');
+            return;
+        }
+
+        try {
+            const options = JSON.parse(registrationOptions);
+
+            const attResp = await SimpleWebAuthnBrowser.startRegistration(options);
+
+            // Add the attestation to the form
+            document.getElementById('passkey').value = JSON.stringify(attResp);
+
+            this.submit();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to register passkey: ' + error.message);
+        }
+    });
+</script>
+@endsection
+
 <div class="col-lg-8 mb-4">
     <div class="card">
         <div class="card-header">

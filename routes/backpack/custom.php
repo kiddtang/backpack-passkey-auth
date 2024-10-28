@@ -16,7 +16,7 @@ Route::group([
     ),
     'namespace' => 'App\Http\Controllers\Admin',
 ], function () { // custom admin routes
-    Route::post('create-passkey', 'PasskeyController@store')->name('backpack.passkey.create');
+    Route::post('passkey/create', [PasskeyController::class, 'create'])->name('backpack.passkey.create');
 }); // this should be the absolute last line of this file
 
 /**
