@@ -37,6 +37,9 @@ class LoginController extends \Backpack\CRUD\app\Http\Controllers\Auth\LoginCont
         return view(backpack_view('auth.login'), $this->data);
     }
 
+    /**
+     * Generate WebAuthn authentication options for passkey-based login.
+     */
     public function authenticateOptions(Request $request)
     {
         $validated = $request->validate([
@@ -63,6 +66,9 @@ class LoginController extends \Backpack\CRUD\app\Http\Controllers\Auth\LoginCont
             ->withInput(['email' => $validated['email']]);
     }
 
+    /**
+     * Authenticate a user using a WebAuthn passkey.
+     */
     public function authenticatePasskey(Request $request)
     {
         $validated = $request->validate([
