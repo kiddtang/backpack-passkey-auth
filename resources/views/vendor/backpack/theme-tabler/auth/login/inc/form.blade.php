@@ -11,19 +11,55 @@
         });
     });
 </script>
-@endsection
+@basset('https://unpkg.com/@simplewebauthn/browser@10.0.0/dist/bundle/index.umd.min.js')
+<script>
+    // Setup passkey authentication
+    const $emailInput = $(`input[name="{{ $username }}"]`);
+    const $passkeyButton = $('#btn-passkey-auth');
 
+    @if(!$valid_passkey_challenge)
+    // Email validation for initial passkey button
+    $emailInput.on('input', () => {
+        const isValid = $emailInput.val().includes('@') && $emailInput.val().includes('.');
+        $passkeyButton.prop('disabled', !isValid).toggleClass('d-none', !isValid);
+    });
+
+    // Initial check for pre-filled email
+    $emailInput.trigger('input');
+
+    // Handle passkey button click with form submision
+    $passkeyButton.on('click', () => {
+        $passkeyButton.prop('disabled', true);
+        $('body').css('cursor', 'wait');
+
+        $('<form>', {
+            method: 'POST',
+            action: '{{ route('passkey.login') }}',
+            html: `
+            <input type="hidden" name="_token" value="${$('meta[name="csrf-token"]').attr('content')}">
+            <input type="hidden" name="email" value="${$emailInput.val()}">
+        `
+        }).appendTo('body').submit();
+    });
+    @else
+    // Handle the actual authentication
+    $passkeyButton.on('click', async () => {
+        // TODO: Passkey Authentication
+    });
+    @endif
+</script>
+@endsection
 <h2 class="h2 text-center my-4">{{ trans('backpack::base.login') }}</h2>
 <form method="POST" action="{{ route('backpack.auth.login') }}" autocomplete="off" novalidate="">
     @csrf
     <div class="mb-3">
         <label class="form-label" for="{{ $username }}">{{ trans('backpack::base.'.strtolower(config('backpack.base.authentication_column_name'))) }}</label>
-        <input autofocus tabindex="1" type="text" name="{{ $username }}" value="{{ old($username) }}" id="{{ $username }}" class="form-control {{ $errors->has($username) ? 'is-invalid' : '' }}">
+        <input autofocus tabindex="1" type="text" name="{{ $username }}" value="{{ old($username) }}" id="{{ $username }}" class="form-control {{ $errors->has($username) ? 'is-invalid' : '' }}" {{ $valid_passkey_challenge ? 'disabled' : '' }}>
         @if ($errors->has($username))
             <div class="invalid-feedback">{{ $errors->first($username) }}</div>
         @endif
     </div>
-    <div class="mb-2">
+    <div class="mb-2 {{ $valid_passkey_challenge ? 'd-none' : '' }}">
         <label class="form-label" for="password">
             {{ trans('backpack::base.password') }}
         </label>
@@ -44,7 +80,7 @@
             <div class="invalid-feedback">{{ $errors->first('password') }}</div>
         @endif
     </div>
-    <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="d-flex justify-content-between align-items-center mb-2 {{ $valid_passkey_challenge ? 'd-none' : '' }}">
         <label class="form-check mb-0">
             <input name="remember" tabindex="3" type="checkbox" class="form-check-input">
             <span class="form-check-label">{{ trans('backpack::base.remember_me') }}</span>
@@ -56,6 +92,10 @@
         @endif
     </div>
     <div class="form-footer">
-        <button tabindex="5" type="submit" class="btn btn-primary w-100">{{ trans('backpack::base.login') }}</button>
+        <button tabindex="5" id="btn-passkey-auth" type="button"
+                class="btn w-100 mb-2 {{ $valid_passkey_challenge ? 'btn-primary' : 'd-none btn-success' }}">
+            {{ $valid_passkey_challenge ? 'Login with passkey' : 'I\'ve passkey registered!' }}
+        </button>
+        <button tabindex="5" type="submit" class="btn btn-primary w-100 {{ $valid_passkey_challenge ? 'd-none' : '' }}">{{ trans('backpack::base.login') }}</button>
     </div>
 </form>

@@ -1,7 +1,22 @@
 <?php
 
+use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\PasskeyController;
 use Illuminate\Support\Facades\Route;
+
+// --------------------------
+// Passkey Sign-In Routes
+// --------------------------
+Route::group([
+    'prefix' => config('backpack.base.route_prefix', 'admin'),
+    'middleware' => array_merge(
+        (array) config('backpack.base.web_middleware', 'web'),
+        ['throttle:5,1'] // 5 attempts per minute
+    ),
+    'namespace'  => 'App\Http\Controllers\Admin\Auth',
+], function () {
+    Route::post('passkey/login', [LoginController::class, 'authenticateOptions'])->name('passkey.login');
+});
 
 // --------------------------
 // Custom Backpack Routes
