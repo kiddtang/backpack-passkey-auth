@@ -13,7 +13,6 @@ use Webauthn\AuthenticatorAttestationResponse;
 use Webauthn\AuthenticatorAttestationResponseValidator;
 use Webauthn\CeremonyStep\CeremonyStepManagerFactory;
 use Webauthn\PublicKeyCredential;
-use Webauthn\PublicKeyCredentialCreationOptions;
 
 class PasskeyController extends Controller
 {
@@ -29,12 +28,6 @@ class PasskeyController extends Controller
         // Deserialize the public key credential from the request
         $publicKeyCredential = JsonSerializer::deserialize($validated['passkey'], PublicKeyCredential::class);
 
-        // Deserialize the creation options from the session
-        $publicKeyCredentialCreationOptions = JsonSerializer::deserialize(
-            Session::get('passkey_register_options'),
-            PublicKeyCredentialCreationOptions::class
-        );
-
         if (! $publicKeyCredential->response instanceof AuthenticatorAttestationResponse) {
             return redirect()->guest(backpack_url('login'));
         }
@@ -44,7 +37,7 @@ class PasskeyController extends Controller
                 (new CeremonyStepManagerFactory)->creationCeremony(),
             )->check(
                 authenticatorAttestationResponse: $publicKeyCredential->response,
-                publicKeyCredentialCreationOptions: $publicKeyCredentialCreationOptions,
+                publicKeyCredentialCreationOptions: Session::get('passkey_register_options'),
                 host: $request->getHost(),
             );
         } catch (\Throwable $e) {
@@ -69,6 +62,9 @@ class PasskeyController extends Controller
 
     public function destroy($id): string
     {
+        // For new passkey creation
+        Session::keep('passkey_register_options');
+
         $user = $this->guard()->user();
 
         // Find the passkey and ensure it belongs to the current user

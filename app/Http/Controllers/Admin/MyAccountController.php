@@ -31,13 +31,11 @@ class MyAccountController extends \Backpack\CRUD\app\Http\Controllers\MyAccountC
      * Generate WebAuthn registration options for credential creation.
      * Necessary data including relying party details, user information, and a random challenge.
      *
-     * @return string JSON serialized PublicKeyCredentialCreationOptions
-     *
      * @throws InvalidDataException
      */
-    private function getRegisterOptions(): string
+    private function getRegisterOptions()
     {
-        $options = new PublicKeyCredentialCreationOptions(
+        return new PublicKeyCredentialCreationOptions(
             rp: new PublicKeyCredentialRpEntity(
                 name: config('app.name'),
                 id: parse_url(config('app.url'), PHP_URL_HOST),
@@ -49,7 +47,5 @@ class MyAccountController extends \Backpack\CRUD\app\Http\Controllers\MyAccountC
             ),
             challenge: Str::random(),
         );
-
-        return JsonSerializer::serialize($options);
     }
 }

@@ -2,7 +2,7 @@
 @basset('https://unpkg.com/@simplewebauthn/browser@10.0.0/dist/bundle/index.umd.min.js')
 <script>
     const form = document.getElementById('passkey-form');
-    const registrationOptions = {!! trim(json_encode(session('passkey_register_options'))) !!};
+    const registrationOptions = {!! json_encode(\App\Support\JsonSerializer::serialize(session('passkey_register_options'))) !!};
 
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
