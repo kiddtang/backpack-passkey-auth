@@ -3,9 +3,15 @@
 namespace App\Http\Controllers\Admin\Auth;
 
 use App\Models\Passkey;
+use App\Support\JsonSerializer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Webauthn\AuthenticatorAssertionResponse;
+use Webauthn\AuthenticatorAssertionResponseValidator;
+use Webauthn\CeremonyStep\CeremonyStepManagerFactory;
+use Webauthn\PublicKeyCredential;
 use Webauthn\PublicKeyCredentialRequestOptions;
 use Webauthn\PublicKeyCredentialSource;
 
@@ -55,5 +61,50 @@ class LoginController extends \Backpack\CRUD\app\Http\Controllers\Auth\LoginCont
 
         return redirect()->back()
             ->withInput(['email' => $validated['email']]);
+    }
+
+    public function authenticatePasskey(Request $request)
+    {
+        $validated = $request->validate([
+            'answer' => ['required', 'json'],
+        ]);
+
+        // Deserialize the answer from the request
+        $publicKeyCredential = JsonSerializer::deserialize($validated['answer'], PublicKeyCredential::class);
+
+        if (! $publicKeyCredential->response instanceof AuthenticatorAssertionResponse) {
+            return redirect()->guest(backpack_url('login'));
+        }
+
+        $passkey = Passkey::firstWhere('credential_id', $publicKeyCredential->rawId);
+
+        if (! $passkey) {
+            throw ValidationException::withMessages(['email' => 'The passkey is invalid.']);
+        }
+
+        try {
+            $publicKeyCredentialSource = AuthenticatorAssertionResponseValidator::create(
+                (new CeremonyStepManagerFactory)->requestCeremony()
+            )->check(
+                publicKeyCredentialSource: $passkey->data,
+                authenticatorAssertionResponse: $publicKeyCredential->response,
+                publicKeyCredentialRequestOptions: Session::get('passkey_authentication_options'),
+                host: $request->getHost(),
+                userHandle: null,
+            );
+        } catch (\Throwable $e) {
+            throw ValidationException::withMessages([
+                'email' => 'The passkey is invalid.',
+            ]);
+        }
+
+        $passkey->update(['data' => $publicKeyCredentialSource]);
+
+        // Login the user
+        $this->guard()->loginUsingId($passkey->user_id);
+
+        $request->session()->regenerate();
+
+        return redirect()->intended($this->redirectPath());
     }
 }

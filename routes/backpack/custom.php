@@ -16,6 +16,7 @@ Route::group([
     'namespace'  => 'App\Http\Controllers\Admin\Auth',
 ], function () {
     Route::post('passkey/login', [LoginController::class, 'authenticateOptions'])->name('passkey.login');
+    Route::post('passkeys/authenticate', [LoginController::class, 'authenticatePasskey'])->name('passkey.authenticate');
 });
 
 // --------------------------

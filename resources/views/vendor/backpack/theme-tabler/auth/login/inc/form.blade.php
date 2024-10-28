@@ -44,7 +44,43 @@
     @else
     // Handle the actual authentication
     $passkeyButton.on('click', async () => {
-        // TODO: Passkey Authentication
+        try {
+            $passkeyButton.prop('disabled', true);
+            $('body').css('cursor', 'wait');
+
+            const authenticationOptions = {!! json_encode(\App\Support\JsonSerializer::serialize(session('passkey_authentication_options'))) !!};
+
+            if (!authenticationOptions) {
+                throw new Error('Authentication options not found');
+            }
+
+            // Start the authentication process
+            const options = JSON.parse(authenticationOptions);
+            const credential = await SimpleWebAuthnBrowser.startAuthentication(options);
+
+            // Create and submit form with credential
+            $('<form>', {
+                method: 'POST',
+                action: '{{ route('passkey.authenticate') }}',
+                html: `
+                <input type="hidden" name="_token" value="${$('meta[name="csrf-token"]').attr('content')}">
+                <input type="hidden" name="answer" value='${JSON.stringify(credential)}'>
+            `
+            }).appendTo('body').submit();
+
+        } catch (error) {
+            console.error('Passkey authentication error:', error);
+            $passkeyButton.prop('disabled', false);
+            $('body').css('cursor', 'default');
+
+            new Noty({
+                type: 'error',
+                text: 'Passkey authentication failed. Please try again.',
+                timeout: 5000
+            }).show();
+
+            window.location.href = '{{ backpack_url() }}';
+        }
     });
     @endif
 </script>
