@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\PasskeyController;
 use Illuminate\Support\Facades\Route;
 
 // --------------------------
@@ -17,6 +18,7 @@ Route::group([
     'namespace' => 'App\Http\Controllers\Admin',
 ], function () { // custom admin routes
     Route::post('passkey/create', [PasskeyController::class, 'create'])->name('backpack.passkey.create');
+    Route::delete('passkey/{id}', [PasskeyController::class, 'destroy'])->name('backpack.passkey.delete');
 }); // this should be the absolute last line of this file
 
 /**

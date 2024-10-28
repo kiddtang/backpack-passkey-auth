@@ -2,7 +2,7 @@
 @basset('https://unpkg.com/@simplewebauthn/browser@10.0.0/dist/bundle/index.umd.min.js')
 <script>
     const form = document.getElementById('passkey-form');
-    const registrationOptions = {!! trim(json_encode(session('passkey_register_options'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) !!};
+    const registrationOptions = {!! trim(json_encode(session('passkey_register_options'))) !!};
 
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
@@ -28,6 +28,83 @@
             alert('Failed to register passkey: ' + error.message);
         }
     });
+
+    // Delete passkey function
+    function deleteEntry(button) {
+        var route = $(button).attr('data-route');
+
+        swal({
+            title: "{!! trans('backpack::base.warning') !!}",
+            text: "{!! trans('backpack::crud.delete_confirm') !!}",
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "{!! trans('backpack::crud.cancel') !!}",
+                    value: null,
+                    visible: true,
+                    className: "bg-secondary",
+                    closeModal: true,
+                },
+                delete: {
+                    text: "{!! trans('backpack::crud.delete') !!}",
+                    value: true,
+                    visible: true,
+                    className: "bg-danger",
+                }
+            },
+            dangerMode: true,
+        }).then((value) => {
+            if (value) {
+                $.ajax({
+                    url: route,
+                    type: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (result) {
+                        if (result == 1) {
+                            // Remove the row from the table
+                            $(button).closest('tr').fadeOut(function () {
+                                $(this).remove();
+
+                                // If no more rows, show the "no passkeys" message
+                                if ($('table tbody tr').length === 0) {
+                                    $('.table-responsive').replaceWith(
+                                        '<div class="alert alert-info">You have no passkeys registered yet.</div>'
+                                    );
+                                }
+                            });
+
+                            // Show a success notification
+                            new Noty({
+                                type: "success",
+                                text: "{!! '<strong>'.trans('backpack::crud.delete_confirmation_title').'</strong><br>'.trans('backpack::crud.delete_confirmation_message') !!}"
+                            }).show();
+                        } else {
+                            // Show an error alert
+                            swal({
+                                title: "{!! trans('backpack::crud.delete_confirmation_not_title') !!}",
+                                text: "{!! trans('backpack::crud.delete_confirmation_not_message') !!}",
+                                icon: "error",
+                                timer: 4000,
+                                buttons: false,
+                            });
+                        }
+                    },
+                    error: function (result) {
+                        // Show an error alert
+                        swal({
+                            title: "{!! trans('backpack::crud.delete_confirmation_not_title') !!}",
+                            text: "{!! trans('backpack::crud.delete_confirmation_not_message') !!}",
+                            icon: "error",
+                            timer: 4000,
+                            buttons: false,
+                        });
+                    }
+                });
+            }
+        });
+    }
 </script>
 @endsection
 
@@ -55,7 +132,10 @@
                                 <td>{{ $passkey->name }}</td>
                                 <td>{{ $passkey->created_at->diffForHumans() }}</td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-danger">
+                                    <button type="button"
+                                            class="btn btn-sm btn-danger"
+                                            onclick="deleteEntry(this)"
+                                            data-route="{{ route('backpack.passkey.delete', $passkey->id) }}">
                                         <i class="la la-trash"></i> Delete
                                     </button>
                                 </td>

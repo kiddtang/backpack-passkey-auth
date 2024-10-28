@@ -66,6 +66,28 @@ class PasskeyController extends Controller
         return redirect()->back();
     }
 
+    public function destroy($id): string
+    {
+        $user = $this->guard()->user();
+
+        // Find the passkey and ensure it belongs to the current user
+        $passkey = $user->passkeys()->find($id);
+
+        if (! $passkey) {
+            return '0';  // Return 0 when passkey missing
+        }
+
+        try {
+            if ($passkey->delete()) {
+                return '1';  // Return 1 for success
+            }
+
+            return '0';  // Return 0 for failure
+        } catch (\Exception $e) {
+            return '0';
+        }
+    }
+
     protected function guard()
     {
         return backpack_auth();
