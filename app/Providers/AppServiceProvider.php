@@ -24,5 +24,10 @@ class AppServiceProvider extends ServiceProvider
             \Backpack\CRUD\app\Http\Controllers\MyAccountController::class,
             \App\Http\Controllers\Admin\MyAccountController::class
         );
+
+        $this->app->bind(
+            \Backpack\CRUD\app\Http\Controllers\Auth\LoginController::class,
+            \App\Http\Controllers\Admin\Auth\LoginController::class
+        );
     }
 }
