@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Support\JsonSerializer;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Webauthn\Exception\InvalidDataException;
 use Webauthn\PublicKeyCredentialCreationOptions;
@@ -21,7 +22,7 @@ class MyAccountController extends \Backpack\CRUD\app\Http\Controllers\MyAccountC
 
         $this->data['passkeys'] = $this->guard()->user()->passkeys()->select(['id', 'name', 'created_at'])->get();
 
-        session(['passkey_register_options' => $this->getRegisterOptions()]);
+        Session::flash('passkey_register_options', $this->getRegisterOptions());
 
         return view(backpack_view('my_account'), $this->data);
     }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\JsonSerializer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 use Prologue\Alerts\Facades\Alert;
 use Webauthn\AuthenticatorAttestationResponse;
@@ -30,7 +31,7 @@ class PasskeyController extends Controller
 
         // Deserialize the creation options from the session
         $publicKeyCredentialCreationOptions = JsonSerializer::deserialize(
-            session('passkey_register_options'),
+            Session::get('passkey_register_options'),
             PublicKeyCredentialCreationOptions::class
         );
 
